@@ -82,6 +82,7 @@ code{background:#eef2f8;padding:1px 5px;border-radius:4px;font-size:12px}
           <button data-rt="ldnew" onclick="showResultTable(this)">Labdip cần tạo</button>
           <button data-rt="nocolor" onclick="showResultTable(this)">Không thấy màu</button>
           <button data-rt="nold" onclick="showResultTable(this)">Không thấy labdip</button>
+          <button data-rt="ms" onclick="showResultTable(this)">MS cần kiểm tra</button>
         </div>
         <div class="tblwrap"><table id="resultTable"></table></div>
       </div>
@@ -101,10 +102,18 @@ code{background:#eef2f8;padding:1px 5px;border-radius:4px;font-size:12px}
             <td><button class="btn secondary" onclick="pickMaster('labdip')">Upload mới</button></td></tr>
         <tr><td>Material Items (sheet <code>Generic</code> + <code>SKU</code>)</td><td>Material Items List PRD 20260714.xlsx</td><td id="srcItems">—</td><td id="cntItems">—</td>
             <td><button class="btn secondary" onclick="pickMaster('items')">Upload mới</button></td></tr>
+        <tr><td>Khách hàng (CustomerCode, CustomerName, SearchName…)</td><td>Customer_14072026.xlsx</td><td id="srcCust">—</td><td id="cntCust">—</td>
+            <td><button class="btn secondary" onclick="pickMaster('customers')">Upload mới</button></td></tr>
+        <tr><td>Supplier Profile (header dòng 2: Supplier Code, ScaX Code…)</td><td>Supplier Profile PRD 20260714.xlsx</td><td id="srcSup">—</td><td id="cntSup">—</td>
+            <td><button class="btn secondary" onclick="pickMaster('suppliers')">Upload mới</button></td></tr>
+        <tr><td>Danh sách MS (sheet <code>MS ScaF</code>: UserName, FullName)</td><td>MS CM VP ScaX ScaF.xlsx</td><td id="srcMs">—</td><td id="cntMs">—</td>
+            <td><button class="btn secondary" onclick="pickMaster('ms')">Upload mới</button></td></tr>
       </table>
       <div style="margin-top:14px">
-        <button class="btn" onclick="resetMasters()">Khôi phục bản gốc (bản nhúng)</button>
+        <button class="btn" onclick="exportMasters()">⬇ Tải 4 file .json.gz (đẩy lên GitHub cho mọi máy)</button>
+        <button class="btn secondary" onclick="resetMasters()">Khôi phục bản gốc (bản nhúng)</button>
       </div>
+      <p class="small">Sau khi upload master mới, bấm nút tải 4 file <code>.json.gz</code> rồi upload chúng vào thư mục <code>data/</code> trên GitHub (Add file → Upload files, đè lên file cũ). Mọi máy sẽ tự dùng bản mới.</p>
       <div id="adminStatus" class="status"></div>
       <input type="file" id="masterInput" accept=".xlsx" class="hidden">
     </div>

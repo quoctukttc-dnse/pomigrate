@@ -66,6 +66,15 @@ Mở `http://localhost:8000`.
 - `Color Library 20260714.xlsx` — sheet `PRD`: cột A=Code, B=Name
 - `Master File Labdip 14072026.xlsx` — sheet 1: RMCode, CustomerColorCode, CustomerColorName(=ColorCode), SupplierCode, SupplierName, SupplierRef, LapdipCode, LapdipName, ColorRange
 - `Material Items List PRD 20260714.xlsx` — sheet `Generic` (39 cột) + sheet `SKU` (6 cột)
+- `Customer_14072026.xlsx` — CustomerCode, CustomerName, SearchName, LongName, isActive
+- `Supplier Profile PRD 20260714.xlsx` — header ở dòng 2: Supplier Code (ScaF), ScaX Code, Supplier Name, …, Active (27), Status (28)
+- `MS CM VP ScaX ScaF.xlsx` — sheet `MS ScaF`: UserName, FullName
+
+## Quy tắc bổ sung (mục K, L hướng dẫn)
+
+- **Supplier**: khi map OldItem→Item, chỉ chọn code ScaF có Supplier Code ScaX khớp cột `Supplier` (D) của file lỗi (hoặc khớp qua Supplier Profile ScaX→ScaF). NCC chưa APPROVE/inactive sẽ được cảnh báo.
+- **Customer**: so theo MÃ khách (không so tên). Ưu tiên code vận hành đúng khách → code generic; tuyệt đối không map vào code của khách khác (những dòng này vào danh sách "Cần mở code mới").
+- **MS (cột T)**: dò gần đúng tên (bỏ dấu, không xét thứ tự từ) theo sheet `MS ScaF` → điền chuẩn dạng `UserName-FULLNAME`. Không thấy hoặc nhiều ứng viên → sheet "MS can kiem tra".
 
 ## File lỗi đầu vào
 
