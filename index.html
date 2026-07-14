@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapping Labdip & Color — ScaX → ScaF</title>
+<script src="libs/xlsx.full.min.js"></script>
+<script src="libs/exceljs.min.js"></script>
+<script src="libs/pako_inflate.min.js"></script>
+<style>
+:root{--blue:#1a56a8;--bg:#f4f6fa;--border:#d9dee8;--ok:#1e8a4c;--warn:#b7791f;--err:#c0392b}
+*{box-sizing:border-box}
+body{font-family:"Segoe UI",Arial,sans-serif;margin:0;background:var(--bg);color:#1f2937}
+header{background:var(--blue);color:#fff;padding:14px 24px}
+header h1{margin:0;font-size:20px}
+header p{margin:4px 0 0;font-size:13px;opacity:.85}
+.tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--border);padding:0 24px}
+.tabs button{border:none;background:none;padding:12px 18px;font-size:14px;cursor:pointer;border-bottom:3px solid transparent;color:#4b5563}
+.tabs button.active{border-color:var(--blue);color:var(--blue);font-weight:600}
+main{max-width:1100px;margin:0 auto;padding:20px 24px 60px}
+.card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:16px}
+.card h2{margin:0 0 10px;font-size:16px}
+.drop{border:2px dashed #9db3d4;border-radius:8px;padding:26px;text-align:center;color:#4b5563;cursor:pointer;transition:.15s}
+.drop.drag{background:#eaf1fb;border-color:var(--blue)}
+.btn{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:10px 18px;font-size:14px;cursor:pointer;margin-right:8px}
+.btn[disabled]{background:#9aa7bb;cursor:not-allowed}
+.btn.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue)}
+.status{font-size:13px;margin-top:8px;white-space:pre-line}
+.pill{display:inline-block;border-radius:12px;padding:2px 10px;font-size:12px;margin:2px 4px 2px 0}
+.pill.ok{background:#e2f4e9;color:var(--ok)}
+.pill.warn{background:#fbeedb;color:var(--warn)}
+.pill.err{background:#fbe3df;color:var(--err)}
+table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:10px}
+th,td{border:1px solid var(--border);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:#eef2f8;position:sticky;top:0}
+.tblwrap{max-height:420px;overflow:auto;border:1px solid var(--border);border-radius:6px;margin-top:10px}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.sumbox{flex:1;min-width:150px;border:1px solid var(--border);border-radius:8px;padding:10px 14px;background:#fafbfd}
+.sumbox b{font-size:22px;display:block}
+.sumbox span{font-size:12px;color:#6b7280}
+.hidden{display:none}
+.small{font-size:12px;color:#6b7280}
+progress{width:100%;height:8px}
+code{background:#eef2f8;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Mapping Labdip &amp; Color — ScaX → ScaF</h1>
+  <p>Tải file lỗi Import PO lên → hệ thống tự điền Item / ColorItem / Lapdip và xuất báo cáo các mục cần tạo mới</p>
+</header>
+<div class="tabs">
+  <button id="tabProcess" class="active" onclick="showTab('process')">Xử lý file lỗi</button>
+  <button id="tabAdmin" onclick="showTab('admin')">Cập nhật Master Data</button>
+</div>
+<main>
+  <!-- ============ TAB XỬ LÝ ============ -->
+  <div id="paneProcess">
+    <div class="card">
+      <h2>1. Dữ liệu master</h2>
+      <div id="masterStatus" class="status">Đang tải dữ liệu master…</div>
+    </div>
+    <div class="card">
+      <h2>2. Tải file lỗi lên</h2>
+      <div class="drop" id="dropZone">Kéo thả file lỗi (.xlsx) vào đây hoặc bấm để chọn<br><span class="small">File cần có các cột: OldItem, Item, ColorItemOld, ColorItem, Lapdip</span></div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden">
+      <div id="fileStatus" class="status"></div>
+      <div style="margin-top:12px">
+        <button class="btn" id="btnRun" disabled onclick="runProcess()">Chạy xử lý</button>
+      </div>
+      <progress id="prog" class="hidden" max="100" value="0"></progress>
+    </div>
+    <div class="card hidden" id="resultCard">
+      <h2>3. Kết quả</h2>
+      <div class="summary" id="summaryBoxes"></div>
+      <button class="btn" onclick="downloadFilled()">⬇ Tải file đã điền (giữ format gốc)</button>
+      <button class="btn secondary" onclick="downloadReport()">⬇ Tải file báo cáo</button>
+      <div id="resultTabs" style="margin-top:14px">
+        <div class="tabs" style="padding:0;border:none">
+          <button class="active" data-rt="all" onclick="showResultTable(this)">Tất cả dòng</button>
+          <button data-rt="sku" onclick="showResultTable(this)">SKU cần tạo</button>
+          <button data-rt="ldnew" onclick="showResultTable(this)">Labdip cần tạo</button>
+          <button data-rt="nocolor" onclick="showResultTable(this)">Không thấy màu</button>
+          <button data-rt="nold" onclick="showResultTable(this)">Không thấy labdip</button>
+        </div>
+        <div class="tblwrap"><table id="resultTable"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB ADMIN ============ -->
+  <div id="paneAdmin" class="hidden">
+    <div class="card">
+      <h2>Cập nhật Master Data</h2>
+      <p class="small">Upload file master mới theo đúng cấu trúc file mẫu. Dữ liệu được lưu trong trình duyệt (IndexedDB) và tự động dùng thay bản nhúng sẵn. Bấm "Khôi phục bản gốc" để quay về dữ liệu nhúng trong website.</p>
+      <table>
+        <tr><th>Master</th><th>File mẫu</th><th>Nguồn hiện tại</th><th>Số dòng</th><th></th></tr>
+        <tr><td>Color Library (sheet <code>PRD</code>: Code, Name)</td><td>Color Library 20260714.xlsx</td><td id="srcColors">—</td><td id="cntColors">—</td>
+            <td><button class="btn secondary" onclick="pickMaster('colors')">Upload mới</button></td></tr>
+        <tr><td>Master Labdip (sheet 1: RMCode … LapdipCode, LapdipName)</td><td>Master File Labdip 14072026.xlsx</td><td id="srcLabdip">—</td><td id="cntLabdip">—</td>
+            <td><button class="btn secondary" onclick="pickMaster('labdip')">Upload mới</button></td></tr>
+        <tr><td>Material Items (sheet <code>Generic</code> + <code>SKU</code>)</td><td>Material Items List PRD 20260714.xlsx</td><td id="srcItems">—</td><td id="cntItems">—</td>
+            <td><button class="btn secondary" onclick="pickMaster('items')">Upload mới</button></td></tr>
+      </table>
+      <div style="margin-top:14px">
+        <button class="btn" onclick="resetMasters()">Khôi phục bản gốc (bản nhúng)</button>
+      </div>
+      <div id="adminStatus" class="status"></div>
+      <input type="file" id="masterInput" accept=".xlsx" class="hidden">
+    </div>
+  </div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
