@@ -293,10 +293,15 @@ if (typeof document !== "undefined") {
 
   /* ---------- Tải master ---------- */
   async function fetchGz(name) {
-    const r = await fetch("data/" + name + ".json.gz");
-    if (!r.ok) throw new Error("Không tải được data/" + name + ".json.gz");
+    const r = await fetch("data/" + name + ".json.gz", { cache: "no-store" });
+    if (!r.ok) throw new Error("Không tải được data/" + name + ".json.gz (HTTP " + r.status + ")");
     const buf = new Uint8Array(await r.arrayBuffer());
-    return JSON.parse(pako.inflate(buf, { to: "string" }));
+    // Server có thể đã tự giải nén (Content-Encoding) → kiểm tra magic bytes gzip 1F 8B
+    const bytes = (buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b) ? pako.inflate(buf) : buf;
+    const txt = new TextDecoder("utf-8").decode(bytes);
+    const c0 = txt.trimStart().charAt(0);
+    if (c0 !== "[" && c0 !== "{") throw new Error("data/" + name + ".json.gz trả về nội dung lạ (bắt đầu bằng «" + txt.slice(0, 30) + "…»). Kiểm tra file có được upload đầy đủ lên server không.");
+    return JSON.parse(txt);
   }
   async function loadMasters() {
     const st = document.getElementById("masterStatus");
